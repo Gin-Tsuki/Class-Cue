@@ -1,0 +1,66 @@
+{
+  "app_name": "Class Cue",
+  "app_type": "hybrid_fullstack",
+  "theme": "light",
+  "typography": {
+    "heading_font": "Outfit, sans-serif",
+    "body_font": "Plus Jakarta Sans, sans-serif",
+    "weights": {
+      "light": 300,
+      "regular": 400,
+      "medium": 500,
+      "semibold": 600,
+      "bold": 700
+    }
+  },
+  "colors": {
+    "archetype": "ORGANIC & EARTHY",
+    "primary": "#2D4A3E",
+    "primary_hover": "#233B31",
+    "accent": "#D97757",
+    "background": "#F9F8F6",
+    "surface": "#FFFFFF",
+    "border": "#E4E2DC",
+    "text_main": "#1C2421",
+    "text_muted": "#5C6B64"
+  },
+  "components": [
+    {
+      "name": "Dashboard",
+      "path": "/frontend/src/components/Dashboard.jsx",
+      "description": "Cockpit command center featuring What's Next, Needs Attention, Student Pulse, Today's Schedule, Quick Actions, and Today's Progress."
+    },
+    {
+      "name": "CalendarView",
+      "path": "/frontend/src/components/CalendarView.jsx",
+      "description": "Day, Week, and Month views allowing opening, adding, editing, and rescheduling classes with session status."
+    },
+    {
+      "name": "ClassSession",
+      "path": "/frontend/src/components/ClassSession.jsx",
+      "description": "Deep dive into a class session with Planning, Attendance, Assignments, and Grades tabs, plus Mark Lesson Complete."
+    },
+    {
+      "name": "Students",
+      "path": "/frontend/src/components/Students.jsx",
+      "description": "Students management with search, add, edit, archive, delete, unique IDs, and full Student Profile with attendance summary and notes."
+    },
+    {
+      "name": "Subjects",
+      "path": "/frontend/src/components/Subjects.jsx",
+      "description": "Subjects management with view, add, edit, archive, and delete."
+    }
+  ],
+  "image_urls": [
+    {
+      "category": "teacher_avatar",
+      "url": "https://images.unsplash.com/photo-1618544976576-3166d5ad3722?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMjh8MHwxfHNlYXJjaHwyfHx0ZWFjaGVyJTIwZGVzayUyMG1pbmltYWxpc3QlMjBjbGFzc3Jvb20lMjBwbGFubmVyfGVufDB8fHx8MTc4NzkwMjQ1Nnww&ixlib=rb-4.1.0&q=85",
+      "description": "Teacher Alex Morgan at desk"
+    }
+  ],
+  "instructions_to_main_agent": [
+    "Build the core teacher-first productivity app 'Class Cue' with all requested views and workflows.",
+    "Ensure all interactive elements and key informational elements have data-testid attributes.",
+    "Use clean modern Tailwind CSS styling with generous spacing, warm minimalist earth tones, and robust state management in React."
+  ]
+}
