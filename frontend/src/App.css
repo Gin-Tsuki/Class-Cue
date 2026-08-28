@@ -1,6 +1,35 @@
  .review-wrap{padding-top:0}.review-queue{border-top:1px solid var(--line);padding-top:24px;margin-bottom:40px}.review-item{background:#fff;border:1px solid var(--line);border-radius:7px;width:100%;display:flex;align-items:center;gap:12px;text-align:left;padding:13px;margin-bottom:8px}.review-item:hover{border-color:#b8c9be;transform:translateX(2px)}.review-item>span:nth-child(2){flex:1}.review-item strong,.review-item small{display:block}.review-item strong{font-size:12px}.review-item small{font-size:10px;color:var(--muted);margin-top:4px}.review-mark{width:28px;height:28px;border-radius:5px;display:grid;place-items:center;font:600 11px Outfit}.review-mark.lesson{background:#f5e5d1;color:#a16b36}.review-mark.grade{background:#e3eee8;color:var(--green)}.empty-review{padding:18px;background:#fff;border:1px solid var(--line);font-size:11px;color:var(--muted);display:flex;gap:8px;align-items:center}.history-title{margin:20px 0 12px}.history-table{border:1px solid var(--line);border-radius:6px;overflow:auto}.history-head,.history-row{display:grid;grid-template-columns:1.1fr 1.3fr 1fr 1fr 1fr;gap:12px;min-width:560px;padding:12px 14px;font-size:10px}.history-head{background:#f5f4ef;color:var(--muted);font-weight:600}.history-row{border-top:1px solid var(--line);color:var(--muted)}.history-status{font-weight:600}.history-status.present{color:#4c8963}.history-status.absent{color:#bf654d}.history-status.late{color:#b68232}.empty-history{padding:18px;font-size:11px;color:var(--muted)}.assignment-extra{padding-top:0}.assignment-manager{margin-top:18px}.assignment-select{flex:1;text-align:left}.assignment-select strong,.assignment-select small{display:block}.assignment-select small{color:var(--muted);font-size:10px;margin-top:4px}.saved-gradebook{border:1px solid var(--line);margin-top:18px}.saved-gradebook .grade-head,.saved-gradebook .grade-row{padding-left:12px;padding-right:12px}.inline-form{display:flex;gap:10px;align-items:end;border-top:1px solid var(--line);padding-top:16px;margin-top:16px}.inline-form label{font-size:10px;color:var(--muted);flex:1}.inline-form input{display:block;width:100%;border:1px solid var(--line);padding:8px;border-radius:4px;margin-top:6px;font-size:11px}.confirm-box{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#fff5f1;border:1px solid #f1c7ba;padding:14px;margin-top:15px;font-size:11px}.confirm-box strong{color:#8f4b3a}.confirm-box span{flex:1;color:var(--muted);font-size:10px}.confirm-box button{padding:7px 10px;border:1px solid var(--line);border-radius:4px;font-size:10px}.danger-btn{background:#c9684e!important;color:#fff;border-color:#c9684e!important}
  .calendar-editor{background:#fff;border:1px solid var(--line);border-radius:8px;padding:25px;margin-top:18px;max-width:760px}.calendar-editor input{display:block;width:100%;border:1px solid var(--line);border-radius:4px;padding:9px;margin-top:7px;font-size:12px;outline-color:var(--coral)}.calendar-edit-button{font-size:9px;color:var(--coral);margin:4px 0}.form-modal{margin:0;max-width:680px;width:100%;box-shadow:0 20px 60px #1c242133}
  .next-card:after{pointer-events:none}
+.student-id-error{color:#b6533f;font-size:11px;margin-top:10px}
+
+.student-filter-row{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.student-filter-row label{font:600 10px 'Plus Jakarta Sans';letter-spacing:1px;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+.student-filter-row select{border:1px solid var(--line);padding:9px 12px;border-radius:5px;background:#fff;font-size:12px;color:var(--ink);min-width:170px;outline-color:var(--coral)}
+.table-heading.student-heading-full,.student-row.student-row-active,.student-row.student-row-archived{display:grid;grid-template-columns:1.8fr .9fr 1.6fr .9fr 1.4fr .9fr 1fr;gap:14px;padding:15px 20px;align-items:center}
+.archived-wrap{margin-top:26px}
+.archived-heading{background:#faf1e8!important;color:#a26b3e!important}
+.empty-row{padding:20px;text-align:center;font-size:11px;color:var(--muted)}
+.subject-chip-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.subject-chip{border:1px solid var(--line);background:#fff;padding:6px 12px;border-radius:20px;font-size:11px;color:var(--muted);cursor:pointer;transition:all .2s}
+.subject-chip:hover{border-color:#b5c3bb}
+.subject-chip.chip-selected{background:#e3eee8;border-color:#7aa68e;color:var(--green);font-weight:600}
+.restore-btn{color:var(--green)!important;font-size:10px;font-weight:600;letter-spacing:.5px;padding:5px 10px;border:1px solid #b5cabf;border-radius:4px;background:#eef4f0}
+.restore-btn:hover{background:#dceae2}
+@media(max-width:900px){.table-heading.student-heading-full,.student-row.student-row-active,.student-row.student-row-archived{grid-template-columns:1.8fr .8fr 1.4fr .8fr 1.2fr .8fr .9fr;min-width:900px}}
+
+.pulse-avatar-healthy{background:#dfeee5;color:#2d4a3e}
+.pulse-avatar-keep-eye{background:#f6e9cf;color:#8a6a2a}
+.pulse-avatar-needs-attention{background:#f6dcd0;color:#a95843}
+.pulse-tag{display:inline-block;font:600 9px 'Plus Jakarta Sans';letter-spacing:1px;padding:2px 7px;border-radius:3px;margin-left:8px;text-transform:uppercase;vertical-align:middle}
+.pulse-tag-healthy{background:#dfeee5;color:#2d4a3e}
+.pulse-tag-keep-eye{background:#f6e9cf;color:#8a6a2a}
+.pulse-tag-needs-attention{background:#f6dcd0;color:#a95843}
+.pulse-row-needs-attention{border-left:3px solid #c9684e;padding-left:10px!important}
+.pulse-row-keep-eye{border-left:3px solid #d19f4a;padding-left:10px!important}
+.pulse-row-healthy{border-left:3px solid #6a9b7f;padding-left:10px!important}
+.pulse-empty{padding:16px 4px;font-size:11px;color:var(--muted)}
+
 .avatar-img{border-radius:50%;object-fit:cover;display:block}
 .sidebar-profile-button{display:flex;align-items:center;gap:9px;border-top:1px solid var(--line);margin-top:auto;padding:18px 8px 0;width:100%;text-align:left;background:none;border-left:0;border-right:0;border-bottom:0;color:inherit;cursor:pointer}
 .sidebar-profile-button:hover{background:#f4f6f3}

@@ -1,0 +1,31 @@
+{
+  "summary": "Frontend-only retest of the iteration-9 CRITICAL edit-save regression on the Students page (StudentsV3). All 5 requested scenarios PASSED: (1) editing stu-1 first name to 'Aarav J' saved, modal closed, row updated, no student-id-error, and change persisted through the 1.2s state poll; (2) editing a student without touching studentId saved and modal closed; (3) adding a student with duplicate ST-001 kept the modal open and rendered data-testid='student-id-error' with exact text 'That Student ID is already in use. Choose a unique ID.'; (4) correcting the ID to ST-999 saved successfully and the new row appeared; (5) smoke: archive stu-3 -> appears in archived table with archivedOn, restore -> back in active, class filter (Grade 9) and subject filter work, delete confirm dialog works. Zero console errors across all runs. Test student ST-999 was cleaned up and Aarav's name reverted to 'Aarav'.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "StudentsV3 modal", "issue": "idError state is not reset when the modal is closed/reopened. Reproduced: trigger duplicate-ID error, click cancel, click 'Add student' again -> the red 'That Student ID is already in use' message is already visible on a fresh blank form. Fix: clear setIdError('') in cancel handler and when opening add/edit (setEditing).", "selector": "[data-testid=\"student-id-error\"]", "priority": "LOW"},
+      {"component": "StudentsV3 row order", "issue": "commit() does students.filter(id!==editing.id) then appends, so any edited (or archived/restored) student jumps to the bottom of the table. Aarav Sharma moved from row 1 to last row after an edit. Preserve original index with a map() update instead.", "selector": ".student-row-active", "priority": "LOW"},
+      {"component": "StudentsV3 archive date", "issue": "archivedOn uses real system date (rendered 2026-08-28) while the app header/dashboard is pinned to 'TUESDAY · JUNE 16, 2026' — inconsistent date context for the user.", "selector": "[data-testid=\"student-stu-3-archived-on\"]", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [
+    "Reset idError when the student modal is opened or cancelled (stale duplicate-ID error shown on fresh Add form).",
+    "Preserve student row position on edit/archive/restore instead of appending to the end of the list."
+  ],
+  "critical_code_review_comments": [
+    "App.js line 21 is now a dead no-op useEffect (useEffect(()=>{},[state.students])) — remove it.",
+    "The legacy global document click listener (line 16) still handles 'add-student-button' and 'archive-*-button' with window.prompt fallbacks. It currently never fires because StudentsV3 calls e.stopPropagation(), but it is fragile duplicate logic that will silently create prompt-based students if stopPropagation is ever dropped. Recommend deleting those branches.",
+    "Dead component StudentsV2 (with the older duplicate-unaware commit) is still in App.js; remove to avoid confusion.",
+    "App.js lines are extremely long (single-line components); consider splitting Students/Subjects into separate modules for maintainability."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "not tested (frontend-only request)", "frontend": "100% of requested scenarios passed"},
+  "seed_data_creation": "Temporarily created student 'Dupe Tester' (ST-999) and renamed stu-1 to 'Aarav J'; both reverted/deleted at end of testing.",
+  "should_call_test_agent_after_fix": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Iteration 10 confirms the edit-save regression is FIXED and duplicate-ID validation works correctly (excludes self). Remaining items are cosmetic: stale idError on modal reopen, edited rows jumping to list bottom, archivedOn using real date. State is persisted via GET/PUT /api/state with a 1.2s poll, so wait ~1.5s after any save before asserting.",
+  "rca_of_the_issue": "Previous defect was a global document-level click guard that compared the edited studentId against ALL students including itself, aborting every save. It is now a no-op stub and validation lives in StudentsV3.commit() with `s.id!==editing.id`, verified working."
+}

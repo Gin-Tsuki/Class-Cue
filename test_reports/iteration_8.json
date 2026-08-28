@@ -1,0 +1,34 @@
+{
+  "summary": "Frontend-only testing of the updated Student Pulse on the Class Cue Dashboard (public preview URL). Verified pulse list rendering, all three category badges, exact expected messages, exclusion of students without data, click-through to Student Profile modal, pulse re-computation after attendance change, and no regressions on other Dashboard sections. Found one real defect in the 'Mark all present' attendance write path (partial persistence / state clobber), which is the flow used to test pulse reactivity.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "SessionV2 Attendance tab", "issue": "'Mark all present' briefly shows 8/8 MARKED then reverts to 6/8. Backend /api/state ends up with only 6 of 8 ses-1 records (stu-5 Kabir and stu-7 Arjun lost). Reproduced twice.", "selector": "[data-testid='mark-all-present-button']", "priority": "HIGH"},
+      {"component": "StudentProfile modal stat block", "issue": "Stat typography looks inverted/broken: value renders tiny while the unit is huge (e.g. Attendance shows a small '0' with a large '%', '0 / 3', '1h 30m' with mismatched baselines).", "selector": ".modal-card stat row", "priority": "LOW"}
+    ],
+    "integration_issues": [
+      {"flow": "Mark all present -> return to Dashboard -> pulse recompute", "issue": "Immediately after mark-all-present + navigation, the Dashboard still showed the old pulse because the bulk attendance write was partially lost/overwritten. Pulse itself recomputes correctly once the backend state is actually updated (Priya Nair moved from 'Needs attention: Missed 3 classes' to 'Keep an eye: Attendance has fallen to 33%'), so the pulse logic is reactive; the defect is in the attendance save path.", "affected_selectors": ["[data-testid='mark-all-present-button']", "[data-testid='student-pulse-0-name']"]}
+    ],
+    "design_issues": [
+      {"screen": "Dashboard Student Pulse", "issues": ["No issues: category badges (NEEDS ATTENTION / KEEP AN EYE / DOING WELL) have adequate contrast, spacing and left-border colour coding render correctly"]}
+    ]
+  },
+  "test_report_links": ["/app/test_reports/browser/pulse_dashboard.png", "/app/test_reports/browser/pulse_recomputed.png", "/app/test_reports/browser/attendance_retry.png"],
+  "action_items": [
+    "Fix 'Mark all present': remove the duplicate write paths — App.js line ~16 document-level handler does a bulk save() while SessionV2's onClick loops current.studentIds.forEach(id=>setAttendance(id,'Present')) with a stale `state` closure, so per-student saves overwrite each other; combined with the 1200ms polling GET (line ~19) that replaces local state with a stale backend snapshot, records are dropped (verified via /api/state: only 6/8 persisted).",
+    "Optional: make the 1.2s polling merge-safe (skip/ignore GET results while a PUT is in flight) to avoid clobbering just-saved local edits across all screens.",
+    "Optional: fix StudentProfile stat typography (value vs unit font sizes inverted)."
+  ],
+  "critical_code_review_comments": [
+    "Two competing sources of truth for attendance writes (global document click listener + component onClick) is the root cause of the lost-update bug; consolidate into a single React handler with functional setState.",
+    "Global document click listeners keyed on data-testid values (App.js lines 16, 21, 22) are fragile and closure-stale; prefer real React onClick handlers.",
+    "App.js contains dead duplicated components (Dashboard, CalendarV2, Session v1) reassigned via `Dashboard=DashboardV2` — remove dead code to reduce confusion and file size."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "not tested", "frontend": "90%"},
+  "seed_data_creation": "No new seed created. Testing mutated ses-1 attendance via mark-all-present; afterwards backend attendance was restored to the original 12 seed rows via PUT /api/state (grades untouched, 7 rows). Dashboard pulse verified back to expected baseline afterwards.",
+  "should_call_test_agent_after_fix": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Student Pulse verified fully: items 0..4 = Priya Nair (Needs attention, 'Missed 3 classes recently...'), Kabir Singh (Needs attention, '80% -> 50%'), Ananya Das (Keep an eye, 67%), Rohan Mehta (Keep an eye, 33%), Aarav Sharma (Doing well, 100%/93%). Meera Kapoor is correctly trimmed by slice(0,5). stu-7..stu-10 correctly excluded. pulse-empty state not reachable with seed (skipped). No console/page errors. Only open issue: mark-all-present partial persistence race.",
+  "rca_of_the_issue": "mark-all-present triggers both App.js's document-level bulk save (correct 8 records) and SessionV2's per-student loop of save() calls built from a stale `state` closure; each PUT/setState overwrites the previous, and the 1.2s polling GET can also restore a stale backend snapshot. Net effect: UI flashes 8/8 then settles at 6/8 and backend stores only 6 of 8 records."
+}

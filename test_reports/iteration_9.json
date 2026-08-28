@@ -1,0 +1,38 @@
+{
+  "summary": "Frontend-only E2E testing of the enhanced Students section (StudentsV3) via public URL. Verified 7-column Active table, Class/Subject(s) cells, filter row (Class/Subject/Status), class/subject/combined filtering, search+filter, archive/restore, Status=All dual tables, data preservation in profile modal, add-student-with-subjects, delete confirm dialog, and regressions on Dashboard/Calendar/Subjects/Session. 14 of 15 requested scenarios pass. One CRITICAL defect: editing an existing student can never be saved because a global duplicate-Student-ID guard blocks the save.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "Student edit modal / duplicate-ID guard (App.js line 21 useEffect)", "issue": "CRITICAL: A document-level capture-phase click guard on save-student-form-button rejects the save whenever the entered Student ID already exists in state, WITHOUT excluding the record being edited. Editing Aarav (stu-1) and toggling Science off shows 'That Student ID is already in use. Choose a unique ID.', calls stopImmediatePropagation so React's commit() never runs, modal stays open, and subjects/class/name changes never persist. ANY edit of an existing student is impossible. Fix: guard must ignore the currently-edited student (s.studentId===id && s.id!==editing.id).", "selector": "[data-testid='save-student-form-button'] / [data-testid='student-id-error']", "priority": "CRITICAL"},
+      {"component": "Duplicate-ID error message", "issue": "Error is injected as a raw DOM node instead of React state; it disappears on the next re-render, leaving the user with an unresponsive Save button and no feedback.", "selector": "[data-testid='student-id-error']", "priority": "MEDIUM"},
+      {"component": "Archived students table", "issue": "Archived rows have no Edit action (only Restore/Delete). Acceptable if intentional, but Class/Subject(s) of an archived student cannot be corrected.", "selector": "[data-testid='archived-students-table']", "priority": "LOW"},
+      {"component": "filter-subject-select", "issue": "Includes archived subjects (e.g. 'Language', status Archived) in the filter options.", "selector": "[data-testid='filter-subject-select']", "priority": "LOW"}
+    ],
+    "integration_issues": [
+      {"flow": "Edit student -> save", "issue": "No PUT is issued; state never updates (blocked by the global ID guard described above).", "affected_selectors": ["[data-testid='edit-stu-1-button']", "[data-testid='save-student-form-button']", "[data-testid='student-stu-1-subjects']"]}
+    ],
+    "design_issues": [
+      {"screen": "Students - archived row", "issues": ["ARCHIVED ON shows the real system date (2026-08-28) while the whole app is pinned to 'Tuesday, June 16, 2026' - inconsistent timeline", "Pre-existing archived records (archived before this feature) render '—' for ARCHIVED ON"]}
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "CRITICAL: Fix the duplicate-Student-ID guard (App.js line 21 useEffect) to exclude the student currently being edited; edit-student save is completely broken.",
+    "Move the duplicate-ID validation into StudentsV3.commit() with React state error rendering instead of document capture listener + manual DOM node.",
+    "Remove the legacy global document click listener branches for 'add-student-button' (window.prompt) and 'archive-*-button' (sets status without archivedOn). They now duplicate StudentsV3 logic and are only neutralised by e.stopPropagation() - very fragile and will re-fire if a handler stops calling stopPropagation.",
+    "Delete dead StudentsV2/StudentsV3 reassignment chain (Students=StudentsV2 then Students=StudentsV3) to avoid confusion.",
+    "Optional: exclude archived subjects from filter-subject-select; align archivedOn with the app's simulated 'today'."
+  ],
+  "critical_code_review_comments": [
+    "App.js is a minified single-line file with multiple superseded component versions (StudentsV2, StudentsV3) and global document click side-effect handlers - high regression risk and unmaintainable.",
+    "commit() in StudentsV3 uses students.filter(...)+[editing] which reorders the roster (edited student jumps to the end) once editing is fixed - use map() instead.",
+    "Validation logic lives in a DOM event listener rather than the component, bypassing React state (root cause of the edit bug)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "not tested", "frontend": "93% (14/15 scenarios; edit-student failed)"},
+  "seed_data_creation": "Created and then deleted test student 'Testy Qa' (ST-901). Restored stu-1 Aarav Sharma from a pre-existing Archived state (from an earlier iteration). Per the test spec, stu-10 Sneha Iyer was permanently deleted through the delete-confirm flow.",
+  "should_call_test_agent_after_fix": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Verified working: 7-column active table headers (ACTIVE STUDENTS/ID/CONTACT/CLASS/SUBJECT(S)/STATUS/ACTIONS), student-{id}-class & -subjects cells, class filter (Grade 8 -> 4 remaining actives), subject filter (sub-1 -> Math students only), combined Grade 9 + Physics -> Meera/Arjun/Diya, search 'Aarav' + Grade 8 shows him and Grade 9 hides him, archive stu-3 -> removed from active + appears in archived table with archived-on date, Status=All renders both tables, restore stu-3 -> back in Active with no duplicate and order preserved, profile modal from archived table still shows 1 Present + 2 Absent (33% attendance), add student with 2 subject chips persists, delete dialog cancel/confirm works. No console errors anywhere. Regression check OK for Dashboard, Calendar, Subjects and Session detail page. Only remaining failure: EDIT STUDENT (see critical issue). Note stu-10 Sneha Iyer no longer exists; use another id for delete tests.",
+  "rca_of_the_issue": "A useEffect (App.js line 21) registers a capture-phase document click listener that intercepts clicks on [data-testid='save-student-form-button'] and calls preventDefault()+stopImmediatePropagation() when the value of [data-testid='student-id-input'] matches any existing student's studentId. When editing an existing student the input holds that student's own ID, so the guard always fires, React's commit() never executes and the edit modal stays open with no persisted change. Reproduction: Students -> edit-stu-1-button -> toggle student-subject-sub-2-toggle -> save-student-form-button -> subjects unchanged, modal still open, transient error 'That Student ID is already in use.'"
+}
