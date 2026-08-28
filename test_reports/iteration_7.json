@@ -1,0 +1,30 @@
+{
+  "summary": "Frontend-only retest of the Class Cue calendar header-row CSS fix. Verified computed grid-template-columns and bounding boxes for the .week-head row vs .calendar-grid in Week and Month views, plus nav/event regression and Day view. Week view: header renders 7 labels (Sun 14 ... Sat 20) in a SINGLE row, computed cols = repeat(7) identical to grid, dx=0 px for all 7 columns. Month view: header (Sun..Sat) single row, 7 cols, dx=0, 42 day cells, 4 events rendered (Jun 16 x3, Jun 18 x1). Nav regression passed (JUNE 14—20 -> next JUNE 21—27 -> 2x prev JUNE 7—13 -> Today JUNE 14—20 with 4 events restored). No console/page errors. The reported bug is FIXED.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "Calendar Day view header (.week-head.calendar-day)", "issue": "Day view header row still falls back to the base 5-column grid (computed cols = 5 x 178.6px) while .calendar-grid.calendar-day is 1fr (893px). The 'Tue 16' selected-day label band only spans 1/5 of the width, so header highlight is misaligned with the day column below. Cause: CSS uses descendant selector `.calendar-day .week-head` but both classes are on the SAME element (like the week/month bug just fixed). Fix: add compound selector `.week-head.calendar-day{grid-template-columns:1fr}`.", "selector": ".week-head.calendar-day", "priority": "MEDIUM"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Calendar - Week view", "issues": ["Day column has fixed height 390px; with 3 events on Tue 16 the last 'Edit time/date' button overflows past the column/board bottom border (visually clipped at the card edge). Consider auto height or scrollable column."]},
+      {"screen": "Calendar - Month view", "issues": ["Month cell height 110px with overflow:hidden clips the 3rd event on Jun 16 (11:00 Science partially hidden) with no '+N more' indicator."]}
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "Add `.week-head.calendar-day{grid-template-columns:1fr}` in App.css so the Day view header aligns with its single column (same root cause as the fixed week/month selectors).",
+    "Optional: handle event overflow in Week (fixed 390px column) and Month (110px cell, add '+N more')."
+  ],
+  "critical_code_review_comments": [
+    "App.js is written as extremely long single-line components (CalendarV3 etc.) — unreadable/unmaintainable; also dead components Calendar and CalendarV2 remain in the file and should be removed.",
+    "App.css keeps the base rule `.week-head,.calendar-grid{grid-template-columns:repeat(5,1fr)}` later in the file; the fix works only via specificity. Prefer view-specific rules only, or set the base to 7 columns."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "not tested", "frontend": "95%"},
+  "seed_data_creation": "None (existing sessions incl. previously created 'Test Class' on Jun 18 used)",
+  "should_call_test_agent_after_fix": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Week & Month header alignment verified fixed via computed styles (dx=0 across 7 columns). Remaining: Day view header still on 5-col grid (cosmetic misalignment) and event overflow clipping in Week/Month. All calendar nav and event rendering works.",
+  "rca_of_the_issue": "Original bug: CSS used descendant selectors (.calendar-week .week-head) while the view modifier class sits on the same element as .week-head, so the base 5-column rule applied and 7 labels wrapped. Compound selectors .week-head.calendar-week/.calendar-month now win on specificity and render a single 7-column row. The identical descendant-selector mistake remains for .calendar-day .week-head."
+}

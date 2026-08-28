@@ -1,0 +1,31 @@
+{
+  "summary": "Frontend-only retest of the Calendar bug fix (CalendarV2). Verified date-based rendering in Week/Day/Month views, add-class, edit date persistence, parent-state sync after navigation, and a smoke check of Dashboard/Students/Subjects. All functional calendar assertions PASSED with zero console/page errors. One CSS layout defect found in Month view (7 columns wrap in a 5-column grid).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Calendar - Month view", "issues": [
+        "week-head/calendar-grid render 7 day cells but the CSS grid is still 5 columns wide, so 'Jun 20' and 'Jun 21' wrap onto a second row (heads y=370 for Jun15-19 vs y=406 for Jun20/21). The wrapped grid columns sit underneath Jun 15/Jun 16 columns, producing misaligned header-to-column mapping visually and a large empty grid area below (~500px).",
+        "Fix: add a `.calendar-grid.calendar-month`/`.week-head.calendar-month` rule with grid-template-columns: repeat(7, 1fr) (and set min-height), so month columns align with their headers.",
+        "Minor: 'Month schedule' only shows one 7-day window (Jun 15-21) which is semantically a week, not a month."
+      ]}
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "Add CSS grid-template-columns: repeat(7,1fr) for month-view week-head and calendar-grid so the 7 day columns don't wrap under the 5-column layout."
+  ],
+  "critical_code_review_comments": [
+    "App.js has three overlapping polling/global-listener effects (1200ms setInterval GET /api/state, a click-delegation sync on save-calendar-edit-button, plus a document-level click handler) — the 1200ms poll can clobber optimistic local state if the PUT is slow; it did not reproduce in this run but it is a latent race and wasteful (a request every 1.2s per client). Recommend removing the interval poll and the redundant save-calendar-edit sync listener.",
+    "CalendarV2.saveSession rebuilds sessions as [...filter(id!==), edited], which reorders sessions; Dashboard uses state.sessions[0]/find for 'What's next', so editing a session silently changes the dashboard's next class. Sort by date+startTime before storing.",
+    "The document-level click delegation in App's effects (window.prompt handlers for add-student/add-subject etc.) duplicates the V2 modal implementations and can double-fire; dead legacy Calendar/Dashboard/Students/Subjects V1 functions remain in the file."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "not tested (per request)", "frontend": "100% of calendar functional assertions passed"},
+  "seed_data_creation": "Created one session 'Test Physics Extra' on 2026-06-17 and moved ses-2 (Science — Grade 9) to 2026-06-18 in the persisted Mongo state. Reset seed if a pristine state is needed.",
+  "should_call_test_agent_after_fix": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Calendar bug fix validated in iteration 4: Week view shows ses-1/ses-2/ses-3 only under Tue 16; Day view shows only Tue 16 with all 3; Month view maps sessions to Jun 16 only (no index distribution). Add class on 2026-06-17 rendered in Wed 17 + Jun 17 and survived Dashboard->Calendar navigation. Editing ses-2 to 2026-06-18 moved it to Thu 18 and removed it from Tue 16. Note the mutated seed data above. Remaining open item is Month-view CSS column wrapping only.",
+  "rca_of_the_issue": "Month view supplies 7 dateMap keys while the stylesheet's .week-head/.calendar-grid define a 5-column grid; the extra two cells wrap to a second grid row instead of resizing the columns."
+}

@@ -1,0 +1,44 @@
+{
+  "summary": "Frontend E2E test of the new editable Teacher Profile feature (9 scenarios) plus calendar-month regression check. Modal opens from both entry points, all 7 fields are editable and the modal closes on save/cancel/X. HOWEVER the saved teacher profile does NOT persist: it is visibly reverted to the seed values within ~1.2s of saving. Root cause found and confirmed with direct API calls - the backend AppState Pydantic model has no `teacher` field and uses extra='ignore', so PUT/GET /api/state silently strips the teacher object, and the 1200ms polling loop in App.js overwrites local state with the stripped server copy. Steps 4, 5 and 7 of the requested test plan FAIL. Also confirmed the calendar month/day header CSS fix was written with the wrong selector and is still broken.",
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "PUT /api/state & GET /api/state", "issue": "AppState model (backend/server.py:40-49) has no `teacher` field and model_config uses extra='ignore', so the teacher object sent by the frontend is silently dropped. Verified: PUT with {\"teacher\":{...},\"sessions\":[{\"id\":\"s1\"}]} returns and stores a body with no `teacher` key. Teacher profile edits can never persist. Add `teacher: Dict[str, Any] = {}` (or a TeacherProfile model) to AppState.", "priority": "CRITICAL"}
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "Calendar month/day header grid", "issue": "App.css rule was written as `.calendar-month .week-head` (descendant) but the DOM element is `<div class='week-head calendar-month'>` (same element), so the fix never applies. Computed: month header = 5 columns (178px x5) while the grid below = 7 columns; header labels wrap to a 2nd row (Jun 20/Jun 21) and are misaligned with the day columns. Day view is equally misaligned (header 5 cols vs grid 1fr). Fix: use `.week-head.calendar-month,.calendar-grid.calendar-month{grid-template-columns:repeat(7,1fr)}` and `.week-head.calendar-day,.calendar-grid.calendar-day{grid-template-columns:1fr}`. Note the existing rules `.week-head,.calendar-grid.calendar-day{...}` and `.week-head,.calendar-grid.calendar-month{...}` incorrectly target ALL .week-head elements via the bare comma selector.", "selector": ".week-head.calendar-month", "priority": "HIGH"},
+      {"component": "TeacherProfileModal", "issue": "Clearing First name (or Last name) and clicking Save silently does nothing - `commit()` returns early with no inline error and the modal stays open with no feedback. Add a visible validation message (e.g. data-testid='teacher-profile-error').", "selector": "[data-testid=\"save-teacher-profile-button\"]", "priority": "MEDIUM"},
+      {"component": "Dashboard progress panel", "issue": "Copy is hardcoded 'Nice pace, Alex. Keep the rhythm.' (DashboardV2 and Dashboard). After renaming the teacher to Priya the dashboard still says 'Alex'. Should use teacher.firstName.", "selector": ".progress-panel small", "priority": "MEDIUM"}
+    ],
+    "integration_issues": [
+      {"flow": "Edit teacher profile -> Save -> persist", "issue": "Immediately after save the sidebar shows 'Priya Kapoor / Senior Mathematics Teacher' and greeting 'Good morning, Priya' (correct), but ~1.2s later the 1200ms polling useEffect (App.js line 19) replaces state with the server response, which has no `teacher` key, so `state.teacher||seed.teacher` falls back to seed and the UI reverts to 'Alex Morgan / Teacher workspace'. Reopening the modal via the topbar shows Alex/Teacher workspace again, and a page reload also shows Alex. Requires the backend AppState fix; additionally consider merging the polled response instead of wholesale replace so in-flight local edits are not clobbered.", "affected_selectors": ["[data-testid=\"open-teacher-profile-button\"]", "[data-testid=\"open-teacher-profile-topbar-button\"]", "header.topbar h1", "[data-testid=\"teacher-first-name-input\"]"]}
+    ],
+    "design_issues": [
+      {"screen": "Teacher profile modal", "issues": ["Layout, spacing and contrast are good; no issues found."]},
+      {"screen": "Calendar Month view", "issues": ["Day-of-week header row wraps onto a second line and is not aligned with the 7 day columns below (see CSS selector bug above)."]}
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "CRITICAL: add `teacher` to the backend AppState model in /app/backend/server.py (e.g. `teacher: Dict[str, Any] = {}`) so PUT/GET /api/state stop stripping it.",
+    "Re-verify persistence after the backend fix: save profile, wait >2s (past the poll), reopen modal, and hard-reload.",
+    "Fix App.css calendar selectors: `.week-head.calendar-month` / `.week-head.calendar-day` (not descendant), and remove the bare `.week-head` from those comma-separated rules.",
+    "Add a visible validation error in TeacherProfileModal when first/last name is blank.",
+    "Replace hardcoded 'Nice pace, Alex' with teacher.firstName in the dashboard progress panel."
+  ],
+  "critical_code_review_comments": [
+    "backend/server.py AppState uses extra='ignore' - any new client-side state slice must be declared explicitly or it is silently discarded. This is the exact failure mode here; consider extra='allow' or an explicit teacher model.",
+    "App.js line 19 polls GET /api/state every 1200ms and calls setState(r.data) wholesale. This will clobber any local edit whose PUT has not completed/round-tripped, and makes any un-modelled field impossible to keep. Poll interval of 1.2s is also unnecessarily aggressive for a single-user app.",
+    "App.js line 14: `teacher.firstName[0]` will throw if teacher.firstName is undefined (e.g. a persisted teacher object missing a key). Use optional chaining."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "not in scope (1 model defect found)", "frontend": "56% (5/9 scenarios passed)"},
+  "seed_data_creation": "Deleted the app_state document in Mongo once to reset corrupted state created during API probing; app now falls back to in-code seed. No other data created.",
+  "should_call_test_agent_after_fix": true,
+  "should_main_agent_self_test": false,
+  "test_credentials": "none required (no auth in app)",
+  "context_for_next_testing_agent": "Passed: initial sidebar/greeting values, modal opens from sidebar & topbar testids, all 7 inputs prefilled and editable, save closes modal, cancel and X close without applying changes, nav smoke test across Dashboard/Calendar/Students/Subjects/Session with zero console or page errors. Failed: post-save persistence (reverts in ~1.2s), reopened-modal values, reload persistence, avatar image never renders (avatarUrl lost with the rest of the teacher object so initials 'AM' show). Retest steps 4/5/7 after the backend AppState `teacher` field is added, and re-check the month/day calendar header column alignment via getComputedStyle on .week-head.",
+  "rca_of_the_issue": "The frontend correctly sends {...state, teacher} to PUT /api/state, but FastAPI validates the body against AppState which declares only subjects/students/sessions/lessons/attendance/assignments/grades/notes with model_config ConfigDict(extra='ignore'). The teacher key is therefore dropped before the Mongo replace_one, and GET /api/state (also response_model=AppState) never returns it. Because App.js re-fetches GET /api/state every 1200ms and does setState(r.data) unconditionally, the freshly saved in-memory teacher object is replaced by a server payload with no teacher, and `state.teacher||seed.teacher` falls back to the hardcoded seed. Reproduction: open app -> sidebar profile -> set first name Priya -> Save -> sidebar briefly shows 'Priya Kapoor' then reverts to 'Alex Morgan' within ~1.2s. Mitigation: declare teacher on AppState (and optionally switch the poll to a merge instead of a full replace)."
+}

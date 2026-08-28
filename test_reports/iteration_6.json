@@ -1,0 +1,30 @@
+{
+  "summary": "Frontend-only targeted retest of Class Cue Calendar Week/Month fix (CalendarV3). Verified week view now renders 7 side-by-side columns Sun 14 - Sat 20 (Saturday/Sunday present), events correctly isolated to Tue 16, week nav (prev/next/today) shifts exactly 7 days, Day view unchanged (single Tue 16 column, 3 sessions, edit buttons), Month view renders 42 cells / 6 rows with date numbers, correct outside-month faded cells (May 31 leading, Jul 1-11 trailing), today (Jun 16) has selected-day highlight, month nav goes MAY 2026 / JULY 2026 / back to JUNE 2026. Add Class (2026-06-18 'Test Class') and Edit Class (ses-2 Science moved to 2026-06-19) both reflected correctly in Week AND Month views and persisted across reload. Zero console errors. One real remaining CSS defect found: the day-label header row is still a 5-column grid, so 7 labels wrap into 2 rows and are misaligned with the 7-column body grid in BOTH week and month views.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "CalendarV3 header row (.week-head)", "issue": "Header day labels still laid out in 5 columns (computed grid-template-columns = 5 x 178.6px) while the body .calendar-grid is 7 x 127.6px. Result: 'Fri 19' and 'Sat 20' (week) / 'Fri' and 'Sat' (month) wrap onto a SECOND row and every label is horizontally misaligned with its column (e.g. 'Test Class' on Thu 18 visually sits under the 'Wed 17' label). ROOT CAUSE: App.css lines 17-18 use DESCENDANT selectors '.calendar-week .week-head' / '.calendar-month .week-head', but in App.js the classes are on the SAME element (<div className={`week-head calendar-${view}`}>), so those rules never match and the base rule '.week-head,.calendar-grid{grid-template-columns:repeat(5,1fr)}' wins. FIX: change to compound selectors '.week-head.calendar-week', '.week-head.calendar-month', '.week-head.calendar-day'.", "selector": ".week-head.calendar-week / .week-head.calendar-month", "priority": "HIGH"},
+      {"component": "Month view day cell", "issue": "Month cell height fixed at 110px with overflow:hidden; when a date has 3 events the 3rd event is visually clipped (observed on Jun 16 before edits - '14:00 Physics' cut off). Consider taller cells / '+N more' indicator.", "selector": ".calendar-grid.calendar-month .day-column", "priority": "MEDIUM"},
+      {"component": "Event ordering", "issue": "saveSession does sessions.filter(id!==) then appends, so an edited session moves to the end of its day stack and events are not sorted by startTime (after editing, Tue 16 showed 09:00, 14:00, 11:00). Sort daySessions by startTime before render.", "selector": ".day-column .event", "priority": "MEDIUM"}
+    ],
+    "integration_issues": [],
+    "design_issues": [{"screen": "Calendar (week + month)", "issues": ["Header labels wrap to a second row and do not align with columns (see ui_bug above)", "Month view: 6 rows always rendered even when the month needs only 5, producing an entire trailing row of faded next-month dates (cosmetic; spec asked for 42 cells so acceptable)"]}]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "Fix App.css: replace descendant selectors '.calendar-week .week-head' / '.calendar-month .week-head' / '.calendar-day .week-head' with compound selectors '.week-head.calendar-week' / '.week-head.calendar-month' / '.week-head.calendar-day' so the header row uses 7 (or 1) columns and aligns with the body grid.",
+    "Increase month cell height or add overflow handling ('+N more') so a 3rd event is not clipped.",
+    "Sort each day's sessions by startTime when rendering."
+  ],
+  "critical_code_review_comments": [
+    "CSS class collision: week-head and calendar-{view} are siblings on one element; descendant selectors silently fail. This is the single remaining cause of the original 'Sat/Sun missing' visual symptom in the header row.",
+    "Month grid is hardcoded to 42 cells; consider computing 35 vs 42 rows dynamically as originally intended."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "not tested (frontend-only request)", "frontend": "92% (11/12 checks passed; header-row grid alignment failed)"},
+  "seed_data_creation": "Created session 'Test Class' on 2026-06-18 via Add Class (left in place, persists in app state). ses-2 (Science) was moved to 2026-06-19 for the edit test and then restored to 2026-06-16.",
+  "should_call_test_agent_after_fix": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Calendar 'today' is pinned to 2026-06-16. Week/Month body grids and all nav/add/edit flows verified working. Only remaining defect is the .week-head 5-column CSS specificity issue in /app/frontend/src/App.css (lines 17-18, 27). Leftover test data: 'Test Class' on 2026-06-18.",
+  "rca_of_the_issue": "App.js renders <div className={`week-head calendar-${view}`}> - both classes on the same element. App.css targets '.calendar-week .week-head' (descendant), which never matches, so the base '.week-head{grid-template-columns:repeat(5,1fr)}' rule applies, causing the 7 day labels to wrap into 2 rows and misalign with the correctly-7-column body grid."
+}

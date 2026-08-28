@@ -28,10 +28,11 @@ Build the first polished, viewable foundation of Class Cue, a teacher-first prod
 - 2026-06-16: Verified production build, preview navigation, session opening, bulk attendance for eight students, and student search at desktop width.
 - 2026-06-16: Added saved calendar day/month editing, calculated pulse rules, assignment-aware grade saving, and in-app student/subject forms with archive and delete actions.
 - 2026-06-16: Synced calendar persistence back into shared workspace state so schedule changes remain visible after navigation.
+- 2026-06-16: Added dated attendance history with session-duration absence totals, a compact review queue, assignment edit/delete with in-app confirmation, saved per-assignment grade views, duplicate Student ID warnings, and calendar save synchronization.
 
 ## Prioritized backlog
 ### P0
-- Add explicit confirmation dialogs for all destructive actions and validate duplicate Student IDs in the form.
+- Replace remaining student and subject native confirmation prompts with the same in-app confirmation treatment used for assignments.
 
 ### P1
 - Add editable student profile fields and full attendance history rows from stored records.
