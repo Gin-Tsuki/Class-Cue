@@ -1,0 +1,42 @@
+{
+  "summary": "Completed backend regression and public browser testing for calendar, gradebook, pulse, class session, student, subject, and responsive flows. Backend passed; UI flows passed except calendar state synchronization after remount.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "Calendar add/edit then navigate away and back",
+        "issue": "CalendarV2 saves sessions to the API but stores them in component-local state only. After leaving Calendar and re-entering, the newly added or edited session disappears from the rendered calendar until a full app reload fetches state.",
+        "affected_selectors": ["[data-testid=add-class-button]", "[data-testid=save-calendar-edit-button]", "[data-testid^=edit-calendar-session-]"]
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_class_cue_state.py",
+    "/app/test_reports/pytest/pytest_results_current.xml"
+  ],
+  "action_items": [
+    "Update the shared App state after CalendarV2 saves a session, or reload state when CalendarV2 mounts, so added/rescheduled sessions remain visible across navigation."
+  ],
+  "critical_code_review_comments": [
+    "CalendarV2 duplicates sessions into local state while the rest of the app reads shared state; this causes stale dashboard/session data and the remount disappearance reproduced above.",
+    "The shared save helper displays Saved before the PUT resolves and silently swallows failures; provide an error state and only confirm successful persistence.",
+    "App.js is a single large module with duplicate legacy and V2 component implementations, increasing the risk that fixes land in an unused implementation."
+  ],
+  "updated_files": [
+    "/app/test_reports/iteration_2.json"
+  ],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "93%"
+  },
+  "seed_data_creation": "Created temporary TEST calendar class, student, and subject plus temporary attendance/grade updates for browser testing; all temporary records and mutations were removed/restored through the state API.",
+  "retest_needed": true,
+  "should_call_test_agent_after_fix": true,
+  "context_for_next_testing_agent": "Backend state GET/PUT/validation passed. Browser-tested desktop and tablet dashboard/session, attendance bulk mark, grade selection/save/API persistence, calendar day/month/add/edit, student CRUD controls, subject CRUD controls, and no page error messages. Retest Calendar add/edit after navigating away and back; also verify shared dashboard/session reflects the edited schedule.",
+  "rca of the issue": "CalendarV2 initializes const [sessions, setSessions] = useState(state.sessions). saveSession updates only setSessions and sends a PUT, while App state remains unchanged. Navigating away unmounts CalendarV2; re-entering initializes from stale App state, so the persisted API change is not rendered. Pass a shared state updater into CalendarV2 or fetch state on mount."
+}

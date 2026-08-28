@@ -26,22 +26,22 @@ Build the first polished, viewable foundation of Class Cue, a teacher-first prod
 - 2026-06-16: Added calendar views, session status, lesson planning, attendance with no duplicate session/student records, assignments, and gradebook surfaces.
 - 2026-06-16: Added student search/profile, attendance summary, donut visualization, notes, recent grades, subjects, sample data, API persistence, and responsive styling.
 - 2026-06-16: Verified production build, preview navigation, session opening, bulk attendance for eight students, and student search at desktop width.
+- 2026-06-16: Added saved calendar day/month editing, calculated pulse rules, assignment-aware grade saving, and in-app student/subject forms with archive and delete actions.
+- 2026-06-16: Synced calendar persistence back into shared workspace state so schedule changes remain visible after navigation.
 
 ## Prioritized backlog
 ### P0
-- Replace prompt-based add/edit controls with polished modal forms and explicit confirmation dialogs.
-- Complete calendar add/edit/reschedule persistence for day and month layouts.
+- Add explicit confirmation dialogs for all destructive actions and validate duplicate Student IDs in the form.
 
 ### P1
 - Add editable student profile fields and full attendance history rows from stored records.
-- Add assignment edit/delete and inline grade save persistence per assignment.
-- Add real rule evaluation for all three Student Pulse patterns from attendance and grade history.
+- Add assignment edit/delete and a richer inline gradebook for every selected assignment.
 
 ### P2
 - Add richer lesson status summaries and a compact history view for completed sessions.
 - Add import/export for a teacher's workspace without introducing school administration.
 
 ## Next tasks
-1. Build reusable modal forms for student, subject, class, assignment, and note editing.
-2. Finish Calendar day/month visual layouts and rescheduling interactions.
-3. Replace hardcoded student pulse copy with calculated signals from stored records.
+1. Add explicit destructive-action confirmations and Student ID uniqueness feedback.
+2. Extend assignment forms to support edit/delete and per-assignment grade selection.
+3. Add full attendance history rows and duration-based absent-time calculations to profiles.
