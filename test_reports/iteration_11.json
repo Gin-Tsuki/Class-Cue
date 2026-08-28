@@ -1,0 +1,29 @@
+{
+  "summary": "Frontend-only regression + new-feature testing of the Student<->Subject connection. Verified (1) Student->Subject assignment via chips in the Edit Student modal (add Physics to Aarav, save, verify Subject(s) column, toggle off, save, verify removal, no duplicate rows), (2) presence of new 'See students' button + student count on every Subject card, (3) Subject -> Students bridge with pre-set Subject filter for Mathematics and Physics (only matching students render, nav becomes active), (4) manual reset to 'All subjects' restores all 9 active students, (5) Subject edit modal open/cancel smoke. All target flows passed with zero console/page errors.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Subjects page", "issues": ["Archived subjects (e.g. 'Language') render in the grid identically to Active ones - only the trailing 'Archived' word in the meta line differentiates them; no dimmed/badge treatment.", "Archived subjects also appear in the Students page Subject filter dropdown and their 'See students' button navigates to an empty table ('No active students match these filters.') - functional but a dead-end path.", "Subject card meta line wraps awkwardly ('...sessions · 6 / students · Active') at 1920px because the card body column is narrow."]},
+      {"screen": "Students table", "issues": ["Editing+saving a student moves that row to the bottom of the table (save does students.filter(...) then append), so the roster order scrambles after each edit. Pre-existing behaviour, recommend sorting by studentId/name before render."]}
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "Optional: exclude Archived subjects from the Students Subject filter dropdown, or hide/dim their 'See students' button.",
+    "Optional: sort the students list deterministically (by studentId) so edited rows don't jump to the bottom.",
+    "Optional: give archived subject cards a visual (dimmed/badge) treatment and fix the meta-line wrapping in the subject card."
+  ],
+  "critical_code_review_comments": [
+    "/app/frontend/src/App.js is a single ~75-line minified-style file with multiple dead superseded components (Dashboard/DashboardV2/V3, Calendar/V2/V3, Students/V2/V3, Subjects/V2, StudentProfile/V2) reassigned via `Students=StudentsV3` etc. This is unmaintainable and lines are thousands of characters wide - split into per-page modules and delete the dead V1/V2 versions.",
+    "App.js line 16/22 use document-level click listeners keyed off data-testid strings to mutate state (e.g. id.startsWith('archive-')). This is fragile global behaviour that can double-handle clicks alongside React onClick handlers; migrate fully to React handlers.",
+    "The 1200ms polling interval (line 19) does a full GET /api/state and setState every 1.2s, replacing all state; it happens to be harmless for local filter state but will clobber unsaved edits and wastes requests. Consider on-demand refresh."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "not tested (per request)", "frontend": "100% of requested flows passed"},
+  "seed_data_creation": "None new. Note the shared server state already contains an extra archived subject 'Language' (sub-1787906321823) and only 9 active students (one archived) from prior iterations.",
+  "should_call_test_agent_after_fix": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Iteration 11 validated Subject->Students bridge (see-students button + pendingSubjectFilter propagation) and Student->Subject chip regression on the public URL. StudentsV3 is the live Students component, SubjectsV2 the live Subjects component. Server state persists across runs: subject sub-1787906321823 ('Language', Archived) and 9 active students exist. No blocking issues remain; only cosmetic/ordering items listed above."
+}
